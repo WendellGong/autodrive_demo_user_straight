@@ -6,7 +6,6 @@ class Point:
         self.x = x
         self.y = y
 
-
 class OtherObject:
     def __init__(self,Pos:Point,Speed:int,type:str) -> None:
         self.type = type
@@ -19,18 +18,18 @@ def get_ahead_object(ObstacleEntryList_:list,):
     for ObstacleEntry in ObstacleEntryList_:
         pass
 
-
+# 微分式PID控制器
 class PID:
-    def __init__(self,kp=1,motion_kp=0,kd=0):
-        self.kp = kp
-        self.kd = kd
-        self.motion_kp = motion_kp
-        self.error_last = 0
-    def update(self,error):
-        out_p = (self.kp+self.motion_kp*abs(error))*error
-        out_d = self.kd*(error-self.error_last)
-        out = out_p+out_d
-        self.error_last = error
+    def __init__(self, kp=1, motion_kp=0, kd=0):
+        self.kp = kp # 比例参数
+        self.kd = kd # 微分参数
+        self.motion_kp = motion_kp # 二阶微分参数
+        self.error_last = 0 # 保留上次误差信息
+    def update(self, error):  # 误差信息更新
+        out_p = (self.kp + self.motion_kp * abs(error)) * error  # 比例项误差
+        out_d = self.kd * (error - self.error_last) # 微分项误差
+        out = out_p + out_d # 输出PID控制量
+        self.error_last = error # 记录上次误差
         return out
 
 
@@ -42,7 +41,7 @@ def get_two_min_indices(olst):
     second_index = lst.index(min(lst))
     return first_index, second_index
 
-def get_dis_between_point_line(point,line):
+def get_dis_between_point_line(point, line): #获取车辆
     curve_array = [(p['x'], p['y']) for p in line]
     # 构建 k-d 树
     kdtree = cKDTree(curve_array)
@@ -50,7 +49,7 @@ def get_dis_between_point_line(point,line):
     nearest_dist, nearest_idx = kdtree.query(point)
     return nearest_dist,curve_array[nearest_idx]
 
-def get_two_near_line(point,lines):
+def get_two_near_line(point,lines): # 获取当前点距离最近的道路中心线
     dis_list = []
     idx_list = []
     road_type_list = []
@@ -64,18 +63,19 @@ def get_two_near_line(point,lines):
     i1,i2 = get_two_min_indices(dis_list)
     return idx_list[i1],idx_list[i2],dis_list[i1],dis_list[i2],road_type_list[i1],road_type_list[i2]
 
-
-def get_line_error(tp,data):
-    p1,p2,d1,d2,t1,t2 = get_two_near_line(tp,data)
+# 获取车辆当前位置到车道中心线的最近距离（由于车道线也是由点组成，因此需要计算两点之间的最近距离）
+def get_line_error(tp, data):
+    p1, p2, d1, d2, t1, t2 = get_two_near_line(tp, data)
     error = 0
-    if t1 == 2 and t2==6:
-        error = d1-d2
+    # 需要注意车道左右位置
+    if t1 == 2 and t2 == 6:
+        error = d1 - d2
     elif t1 == 1 and t2 == 6:
         error = d2 - d1
     elif t1 == 6 and t2 == 2:
         error = d2 - d1
-    elif t1 ==6 and t2 == 1:
-        error = d1-d2
+    elif t1 == 6 and t2 == 1:
+        error = d1 - d2
 
     return error
 
@@ -91,4 +91,5 @@ if __name__ == '__main__':
         {'Type': 1, 'PointPath': [{'x': -82.52, 'y': 23.88, 'z': 0.0}, {'x': -72.89, 'y': 31.55, 'z': 0.0}, {'x': -63.26, 'y': 39.22, 'z': 0.0}, {'x': -53.63, 'y': 46.89, 'z': 0.0}, {'x': -44.0, 'y': 54.56, 'z': 0.0}]}]
 
 
-    get_line_error(tp,data)
+    err = get_line_error(tp,data)
+    print(err)
